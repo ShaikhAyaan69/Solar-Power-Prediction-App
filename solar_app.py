@@ -1,15 +1,19 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Dec 25 19:29:20 2024
-
-@author: ASUS
-"""
 import streamlit as st
 import numpy as np
 import joblib
+import os
 
-# Load the trained model
-model = joblib.load('solar_model.pkl')
+# Load the model with error handling
+model_file = 'solar_model.pkl'  # Path to the model file
+if os.path.exists(model_file):
+    try:
+        model = joblib.load(model_file)
+    except Exception as e:
+        st.error(f"Error loading model: {e}")
+        st.stop()
+else:
+    st.error(f"Model file '{model_file}' not found. Please upload it.")
+    st.stop()
 
 # Set the page layout for optimal use of space
 st.set_page_config(page_title="Solar Power Prediction", page_icon="☀️", layout="wide")
@@ -53,7 +57,6 @@ with col3:
         humidity = st.slider("Humidity (%)", 0, 100, 40)
         temp_humidity_interaction = st.slider("Temp-Humidity Interaction", 0.0, 50.0, 10.0)
 
-
 # Ensure no vertical scrolling for layout constraints
 st.markdown("<style>body{overflow:hidden;}</style>", unsafe_allow_html=True)
 
@@ -62,6 +65,7 @@ st.markdown("<style>footer{visibility: hidden;}</style>", unsafe_allow_html=True
 
 # Adding the prediction button
 if st.button("✨ Predict Solar Power"):
+    # Prepare the features for prediction
     features = np.array([[ 
         distance_to_solar_noon, temperature, solar_intensity_factor, sky_cover, 
         wind_speed, wind_direction, wind_u, wind_v, average_wind_speed, 
@@ -69,10 +73,8 @@ if st.button("✨ Predict Solar Power"):
     ]])
     
     # Prediction
-    prediction = model.predict(features)
-    st.success(f"🌟 Predicted Solar Power Output: **{prediction[0]:.2f} kW**")
-
-
-
-
-
+    try:
+        prediction = model.predict(features)
+        st.success(f"🌟 Predicted Solar Power Output: **{prediction[0]:.2f} kW**")
+    except Exception as e:
+        st.error(f"An error occurred during prediction: {e}")
